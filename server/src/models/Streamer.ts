@@ -1,10 +1,11 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface Streamer extends Document {
+interface Streamer {
   nick: string;
   platform: string;
   description: string;
-  votes: number;
+  upvotes: number;
+  downvotes: number;
 }
 
 const StreamerSchema: Schema<Streamer> = new Schema<Streamer>(
@@ -27,9 +28,15 @@ const StreamerSchema: Schema<Streamer> = new Schema<Streamer>(
       minlength: 10,
       maxlength: 500,
     },
-    votes: {
+    upvotes: {
       type: Number,
       default: 0,
+      min: 0,
+    },
+    downvotes: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   { timestamps: true }
