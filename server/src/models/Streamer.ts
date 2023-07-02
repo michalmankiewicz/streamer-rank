@@ -27,7 +27,7 @@ const StreamerSchema: Schema<Streamer> = new Schema<Streamer>(
     description: {
       type: String,
       required: [true, "Please provide description"],
-      minlength: 10,
+      minlength: 3,
       maxlength: 500,
     },
     upvotes: {

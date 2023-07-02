@@ -1,57 +1,57 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import StreamerItem from './StreamerItem';
-import { Box, CircularProgress, Stack, Typography } from '@mui/material';
+import { Box, CircularProgress, Stack, Typography, useTheme } from '@mui/material';
 import { Streamer } from '../../types';
-import api from '../../api/streamers';
 import { Socket } from 'socket.io-client';
+import useHttp from '../../hooks/useFetchData';
+import { BASE_URL_STREAMERS } from '../../constants';
 
 type Props = {
   socket: Socket;
 };
 
 function StreamerList({ socket }: Props) {
-  const [streamers, setStreamers] = useState<Streamer[] | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
-  console.log(streamers);
-  console.log(socket);
+  const theme = useTheme();
+
+  const {
+    value,
+    isLoading: isFetchLoading,
+    isError: isFetchError,
+    sendRequest: fetchStreamers,
+  } = useHttp<{ streamers: Streamer[] }>();
+  const streamers = value?.streamers;
+
+  const { isError: isUpdateStreamerError, sendRequest: updateStreamer } = useHttp();
 
   useEffect(() => {
-    const fetchStreamers = async () => {
-      try {
-        setIsLoading(true);
-        console.log('FETCHING');
-        const response = await api.get('');
-        setStreamers(response.data.streamers);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     socket.on('streamerAdded', () => {
-      fetchStreamers(); // Fetch updated streamer list on event
+      fetchStreamers(BASE_URL_STREAMERS);
     });
 
     socket.on('updateStreamerVote', () => {
-      fetchStreamers(); // Fetch updated streamer list on event
+      fetchStreamers(BASE_URL_STREAMERS);
     });
 
-    fetchStreamers();
-  }, []);
+    fetchStreamers(BASE_URL_STREAMERS);
+
+    return () => {
+      socket.off('streamerAdded');
+      socket.off('updateStreamerVote');
+    };
+  }, [fetchStreamers]);
 
   const handleUpdateVote = async (streamerId: string, voteType: 'upvotes' | 'downvotes') => {
-    await api.put(`/${streamerId}/vote`, { voteType });
+    await updateStreamer(`${BASE_URL_STREAMERS}/${streamerId}/vote`, 'PUT', { voteType });
     socket.emit('updateStreamerVote');
   };
 
   return (
     <Box sx={{ mx: 'auto' }}>
       <Stack spacing={2}>
-        {isLoading && <CircularProgress size={60} sx={{ mx: 'auto', mt: '10rem' }} />}
-        {!isLoading &&
-          streamers &&
-          streamers.map((str, i) => (
+        {isFetchLoading && <CircularProgress size={60} sx={{ mx: 'auto', mt: '10rem' }} />}
+        {!isFetchLoading &&
+          streamers?.length !== 0 &&
+          streamers?.map((str, i) => (
             <StreamerItem
               key={str._id}
               id={str._id}
@@ -61,6 +61,16 @@ function StreamerList({ socket }: Props) {
               onHandleUpdateVote={handleUpdateVote}
             />
           ))}
+        {!isFetchLoading && streamers?.length === 0 && (
+          <Typography fontSize={25} color={theme.palette.primary.main} textAlign="center">
+            There is no streamers! Add new one to see list.
+          </Typography>
+        )}
+        {(isFetchError || isUpdateStreamerError) && (
+          <Typography fontSize={25} color={theme.palette.primary.main} textAlign="center">
+            Something went wrong!
+          </Typography>
+        )}
       </Stack>
     </Box>
   );

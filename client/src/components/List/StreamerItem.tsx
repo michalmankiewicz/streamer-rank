@@ -1,6 +1,5 @@
 import { Box, Typography, useTheme } from '@mui/material';
-import { ThumbUp, ThumbDown, ArrowDropDown, ArrowDropUp } from '@mui/icons-material';
-import React from 'react';
+import { ThumbUp, ThumbDown } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 type Props = {

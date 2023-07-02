@@ -1,17 +1,20 @@
 import {
   Box,
   Button,
-  FormControl,
   InputLabel,
   MenuItem,
   Select,
   TextField,
   useTheme,
   SelectChangeEvent,
+  CircularProgress,
+  Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import api from '../../api/streamers';
 import { Socket } from 'socket.io-client';
+import useHttp from '../../hooks/useFetchData';
+import { BASE_URL_STREAMERS } from '../../constants';
+import FormField from './FormField';
 
 type Props = {
   socket: Socket;
@@ -19,25 +22,44 @@ type Props = {
 
 function AddStreamerForm({ socket }: Props) {
   const theme = useTheme();
+  const { isLoading, isError, sendRequest: createStreamer } = useHttp();
+
   const [nickname, setNickname] = useState<string>('');
-  // TODO
   const [platform, setPlatform] = useState<string>('');
   const [description, setDescription] = useState<String>('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const isNicknameError = nickname.trim().length < 2 || nickname.trim().length > 20;
+  const isPlatformError = platform.trim().length === 0;
+  const isDescriptionError = description.trim().length < 3 || nickname.trim().length > 500;
+
+  const canSubmit = !isNicknameError && !isPlatformError && !isDescriptionError;
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setNickname(e.target.value);
+
   const handlePlatformChange = (e: SelectChangeEvent) => setPlatform(e.target.value);
+
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setDescription(e.target.value);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.post('', {
+    setIsSubmitted(true);
+
+    if (!canSubmit) return;
+
+    await createStreamer(BASE_URL_STREAMERS, 'POST', {
       nick: nickname,
       platform: platform,
       description: description,
     });
     socket.emit('streamerAdded');
+
+    setNickname('');
+    setDescription('');
+    setPlatform('');
+    setIsSubmitted(false);
   };
 
   return (
@@ -51,19 +73,30 @@ function AddStreamerForm({ socket }: Props) {
       gap={2}
       onSubmit={handleFormSubmit}
     >
-      <TextField
-        onChange={handleNicknameChange}
-        fullWidth
-        id="nick"
-        label="Nick"
-        variant="filled"
-        color="primary"
-        size="small"
-        value={nickname}
-      />
-      <FormControl>
+      <FormField
+        showError={isSubmitted && isNicknameError}
+        errorMessage="Nickname should contain from 2 to 20 characters"
+      >
+        <TextField
+          required
+          onChange={handleNicknameChange}
+          fullWidth
+          id="nick"
+          label="Nick"
+          variant="filled"
+          color="primary"
+          size="small"
+          value={nickname}
+        />
+      </FormField>
+
+      <FormField
+        showError={isSubmitted && isPlatformError}
+        errorMessage="Platform can not be empty"
+      >
         <InputLabel id="platform">Platform</InputLabel>
         <Select
+          required
           variant="filled"
           fullWidth
           labelId="platform"
@@ -79,21 +112,33 @@ function AddStreamerForm({ socket }: Props) {
           <MenuItem value="Kick">Kick</MenuItem>
           <MenuItem value="Rumble">Rumble</MenuItem>
         </Select>
-      </FormControl>
+      </FormField>
 
-      <TextField
-        fullWidth
-        multiline
-        id="description"
-        label="Description"
-        variant="filled"
-        size="small"
-        value={description}
-        onChange={handleDescriptionChange}
-      />
-      <Button type="submit" variant="contained">
-        Submit
+      <FormField
+        showError={isSubmitted && isDescriptionError}
+        errorMessage=" Nickname should contain from 3 to 500 characters"
+      >
+        <TextField
+          required
+          fullWidth
+          multiline
+          id="description"
+          label="Description"
+          variant="filled"
+          size="small"
+          value={description}
+          onChange={handleDescriptionChange}
+        />
+      </FormField>
+
+      <Button type="submit" variant="contained" sx={{ height: '2.6rem' }}>
+        {isLoading ? <CircularProgress size={10} sx={{ color: 'white' }} /> : 'Submit'}
       </Button>
+      {isError && (
+        <Typography textAlign="center" color="red">
+          Something went wrong!
+        </Typography>
+      )}
     </Box>
   );
 }
