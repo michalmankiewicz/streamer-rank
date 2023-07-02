@@ -14,6 +14,11 @@ export default function initializeSocketServer(httpServer: HttpServer) {
   io.on("connection", (socket: socket.Socket) => {
     console.log("A new client connected");
 
+    // Listen for 'streamerAdded' event
+    socket.on("streamerAdded", () => {
+      io.emit("streamerAdded"); // Emit event to all clients
+    });
+
     // Listen for upvote and downvote events
     socket.on("upvote", (streamerId: string) => {
       updateVoteCount(streamerId, "upvotes");

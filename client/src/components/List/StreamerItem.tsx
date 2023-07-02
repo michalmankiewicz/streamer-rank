@@ -8,11 +8,16 @@ type Props = {
   nick: string;
   votes: number;
   place: number;
+  onHandleUpdateVote: (streamerId: string, voteType: 'upvotes' | 'downvotes') => void;
 };
 
 function StreamerItem(props: Props) {
   const theme = useTheme();
   const navigate = useNavigate();
+
+  const handleUpdatevote = (voteType: 'upvotes' | 'downvotes') => {
+    props.onHandleUpdateVote(props.id, voteType);
+  };
 
   return (
     <Box
@@ -38,6 +43,10 @@ function StreamerItem(props: Props) {
 
       <Box display="flex" alignItems="center" gap={1}>
         <ThumbUp
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUpdatevote('upvotes');
+          }}
           fontSize="large"
           sx={{ '&:hover': { color: theme.palette.primary.main, cursor: 'pointer' } }}
         />
@@ -45,6 +54,10 @@ function StreamerItem(props: Props) {
           {props.votes}
         </Typography>
         <ThumbDown
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUpdatevote('downvotes');
+          }}
           fontSize="large"
           sx={{ '&:hover': { color: theme.palette.primary.main, cursor: 'pointer' } }}
         />

@@ -36,3 +36,20 @@ export const createStreamer = async (req: Request, res: Response) => {
   const streamer = await StreamerModel.create(req.body);
   res.status(StatusCodes.CREATED).json({ streamer });
 };
+
+export const updateStreamerVotes = async (req: Request, res: Response) => {
+  const { id: streamerID } = req.params;
+  const { voteType } = req.body;
+
+  if (!Types.ObjectId.isValid(streamerID)) {
+    throw new NotFoundError(`Invalid streamer ID: ${streamerID}`);
+  }
+
+  const updatedStreamer = await StreamerModel.findByIdAndUpdate(
+    streamerID,
+    { $inc: { [voteType]: 1 } },
+    { new: true }
+  );
+
+  res.status(StatusCodes.OK).json({ updatedStreamer });
+};

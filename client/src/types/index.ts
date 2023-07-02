@@ -1,7 +1,8 @@
 export type Streamer = {
-  id: string;
+  _id: string;
   nick: string;
   platform: string;
   description: string;
-  votes: number;
+  upvotes: number;
+  downvotes: number;
 };
