@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import mongoose, { Schema, Document } from "mongoose";
 
 interface Streamer {
@@ -6,6 +7,7 @@ interface Streamer {
   description: string;
   upvotes: number;
   downvotes: number;
+  votesDifference: number;
 }
 
 const StreamerSchema: Schema<Streamer> = new Schema<Streamer>(
@@ -37,6 +39,10 @@ const StreamerSchema: Schema<Streamer> = new Schema<Streamer>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    votesDifference: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

@@ -5,7 +5,7 @@ import { CustomAPIError, NotFoundError } from "../errors";
 import { Types } from "mongoose";
 
 export const getAllStreamers = async (req: Request, res: Response) => {
-  const streamers = await StreamerModel.find({});
+  const streamers = await StreamerModel.find({}).sort({ votesDifference: -1 });
   res.status(StatusCodes.OK).json({ streamers });
 };
 
@@ -34,6 +34,7 @@ export const getSingleStreamer = async (
 // TODO Unique
 export const createStreamer = async (req: Request, res: Response) => {
   const streamer = await StreamerModel.create(req.body);
+
   res.status(StatusCodes.CREATED).json({ streamer });
 };
 
@@ -47,8 +48,10 @@ export const updateStreamerVotes = async (req: Request, res: Response) => {
 
   const updatedStreamer = await StreamerModel.findByIdAndUpdate(
     streamerID,
-    { $inc: { [voteType]: 1 } },
-    { new: true }
+    {
+      $inc: { [voteType]: 1, votesDifference: voteType === "upvotes" ? 1 : -1 },
+    },
+    { new: true, runValidators: true }
   );
 
   res.status(StatusCodes.OK).json({ updatedStreamer });
